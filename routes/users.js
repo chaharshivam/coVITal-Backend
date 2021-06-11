@@ -10,6 +10,36 @@ const multer = require('multer');
 const fs = require('fs');
 const router = express.Router();
 
+const storage = multer.diskStorage({
+    destination: function(req,file,cb){
+        if(file.mimetype === "audio/mp3"){
+            cb(null, './audioFiles/')
+        }else
+            cb(null, './profileImages/')
+    },
+    filename:function(req,file,cb){
+        cb(null,file.originalname);
+    }
+})
+
+const fileFilter = (req,file,cb) =>{
+    if(file.mimetype === "image/png" || file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "audio/webm" || file.mimetype === "audio/mp3"){
+        //accepting file
+        cb(null,true);
+    }else {
+        //rejecting file
+        cb(new Error("Profile Image type should be jpeg, jpg or png"), false);
+    }
+}
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 1024 * 1024 * 5
+    },
+    fileFilter: fileFilter
+});
+
 
 router.post('/register', upload.single('profilePicture') ,async (req, res)=> {
     const {error} = validateUser(req.body);
