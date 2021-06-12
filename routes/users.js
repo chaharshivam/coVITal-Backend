@@ -83,5 +83,31 @@ router.post('/auth', async (req, res)=> {
     res.status(200).send(token);
 })
 
+router.put('/modify',upload.single('profilePicture'),async (req,res)=>{
+    console.log('this is request body for put');
+    console.log(req.body)
+
+    console.log("req validated");
+    const modifyUser = await User.findOne({email: req.body.email});
+
+    modifyUser.firstName = req.body.firstName;
+    modifyUser.lastName = req.body.lastName;
+    modifyUser.userName= req.body.userName;
+    modifyUser.email = req.body.email;
+    modifyUser.about = req.body.about;
+    modifyUser.address = req.body.address;
+    modifyUser.country=req.body.country;
+    modifyUser.state = req.body.state;
+    modifyUser.zip = req.body.zip;
+
+    if(req.file)
+        modifyUser.profilePicturePath = req.file.filename;
+
+    await modifyUser.save()
+    res.status(200).send("Successfully updated your profile");
+
+})
+
+
 
 module.exports = router
