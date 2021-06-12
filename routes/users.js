@@ -68,6 +68,20 @@ router.post('/register', upload.single('profilePicture') ,async (req, res)=> {
     res.header("x-auth-token",token).send( _.pick(newUser, ["name","actualName","email","accountCreatedOn"]) );
 })
 
+router.post('/auth', async (req, res)=> {
+    console.log(req.body);
+    const {error} = validateAuth(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    let authUser = await User.findOne({email: req.body.email});
+    if (!authUser) return res.status(400).send("Invalid email or password");
+
+    const validPassword = await bcrypt.compare(req.body.password, authUser.password);
+    if(!validPassword) return res.status(400).send("Invalid email or password");
+
+    const token = authUser.generateAuthToken();
+    res.status(200).send(token);
+})
 
 
 module.exports = router
