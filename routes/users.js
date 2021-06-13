@@ -108,6 +108,21 @@ router.put('/modify',upload.single('profilePicture'),async (req,res)=>{
 
 })
 
+router.delete('/delete',auth,async (req,res)=>{
+    const deleteUser = await User.findByIdAndRemove(req.user._id,{useFindAndModify: false});
+
+    if(!deleteUser) return res.status(400).send("User not found");
+    res.status(200).send(`${deleteUser.name} successfully deleted`);
+})
+
+function validateAuth(req){
+    const schema = Joi.object({
+        email: Joi.string().required().email(),
+        password: Joi.string().min(5).max(255).required(),
+    });
+    return schema.validate(req);
+}
+
 
 
 module.exports = router
