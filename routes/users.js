@@ -123,6 +123,21 @@ function validateAuth(req){
     return schema.validate(req);
 }
 
+router.get('/getUser',auth ,async (req, res) =>{
+    const giveUser = await User.findById(req.user._id,{useFindAndModify: false});
+    if(!giveUser) return res.status(400).send("User not found");
+
+    console.log("user is ");
+    console.log(giveUser);
+    res.status(200).send(_.pick(giveUser, ["firstName","lastName","email","accountCreatedOn", "about", "profilePicturePath", "address","country","state","zip","userName"]));
+})
+
+router.post('/audio',upload.any(), async (req,res)=>{
+    let formData = req.body;
+    let files = req.files;
+    console.log('form data', formData, 'file' , files);
+    res.sendStatus(200);
+})
 
 
 module.exports = router
