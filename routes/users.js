@@ -8,8 +8,12 @@ const config = require('config');
 const auth = require('../middlewares/auth');
 const multer = require('multer');
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
+var path = require('path');
+const {PythonShell} = require('python-shell');
 
+let nameOfFile;
 const storage = multer.diskStorage({
     destination: function(req,file,cb){
         if(file.mimetype === "audio/mp3"){
@@ -17,8 +21,16 @@ const storage = multer.diskStorage({
         }else
             cb(null, './profileImages/')
     },
-    filename:function(req,file,cb){
-        cb(null,file.originalname);
+    filename:function(req,file,cb) {
+        if (file.mimetype === "audio/mp3") {
+            let uuid = uuidv4();
+            nameOfFile = uuid + ".mp3";
+            cb(null, nameOfFile);
+        } else {
+            let uuid = uuidv4();
+            nameOfFile = uuid + path.extname(file.originalname);
+            cb(null, nameOfFile);
+        }
     }
 })
 
@@ -35,7 +47,7 @@ const fileFilter = (req,file,cb) =>{
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 1024 * 1024 * 5
+        fileSize: 1024 * 1024 * 50
     },
     fileFilter: fileFilter
 });
@@ -132,11 +144,21 @@ router.get('/getUser',auth ,async (req, res) =>{
     res.status(200).send(_.pick(giveUser, ["firstName","lastName","email","accountCreatedOn", "about", "profilePicturePath", "address","country","state","zip","userName"]));
 })
 
-router.post('/audio',upload.any(), async (req,res)=>{
-    let formData = req.body;
-    let files = req.files;
-    console.log('form data', formData, 'file' , files);
-    res.sendStatus(200);
+router.post('/audio',upload.single('audio'), async (req,res)=>{
+    console.log(req.file)
+    let options = {
+        //mode: 'text',
+        //pythonOptions: ['-u'], // get print results in real-time
+        scriptPath: './ML_files/', //it's optional, if script is present in same folder.
+        args: [`${nameOfFile}`] //An argument which can be accessed in the script using sys.argv[1]
+    };
+    PythonShell.run('processAudio.py', options, function (err, result) {
+        if (err) throw err;
+        // result is an array consisting of messages collected
+        //during execution of script.
+        console.log(result);
+        res.status(200).send(result[0])
+    });
 })
 
 
